@@ -170,7 +170,9 @@ sub request {
     my ($self, $uri) = @_;
     $uri ||= $self->uri_as_string;
     my $response = LWP::UserAgent->new->get($uri);
-    return Facebook::Graph::Response->new(response => $response);
+    my $graph_response = Facebook::Graph::Response->new(response => $response);
+	$graph_response->error($response->message) unless $response->is_success;
+	return $graph_response;
 }
 
 no Any::Moose;
@@ -184,16 +186,27 @@ Facebook::Graph::Query - Simple and fast searching and fetching of Facebook data
 =head1 SYNOPSIS
 
  my $fb = Facebook::Graph->new;
- 
+
+ use Data::Dumper; 
+
  my $perl_page = $fb->find('16665510298')
     ->include_metadata
-    ->request
-    ->to_hashref;
+    ->request;
+ if (!$perl_page->error) {
+    print Dumper $perl_page->to_hashref;
+ } else {
+	die $perl_page->error;
+ }
  
  my $sarah_bownds = $fb->find('sarahbownds')
     ->select_fields(qw(id name))
-    ->request
-    ->to_hashref;
+    ->request;
+
+ if (!$sarah_bownd->error) {
+ 		print Dumper $sarah_bownd->to_hashref;
+ } else {
+ 		die $sarah_bownd->error;
+ }
 
  # this one would require an access token
  my $new_car_posts = $fb->query
@@ -353,6 +366,10 @@ Returns a URI string based upon all the methods you've called so far on the quer
 =head2 request ( [ uri ] )
 
 Forms a URI string based on every method you've called so far, and fetches the data. Returns a L<Facebook::Graph::Response> object.
+
+=head2 error
+
+After you do "..->request", you can check errors.
 
 =head3 uri
 

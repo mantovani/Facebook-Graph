@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 11;
 use lib '../lib';
 
 use_ok('Facebook::Graph');
@@ -24,8 +24,6 @@ is($sarah->{name}, 'Sarah Bownds', 'know her name');
 is(scalar(keys %{$sarah}), 4, 'only fetched the things i asked for');
 is($sarah->{type}, 'user', 'she is a user');
 
-my $error_query = eval { $fb->query->select_fields('')->request->as_json };
-is(ref $@, 'ARRAY', 'exception thrown is an array');
-is($@->[0], 400, 'exception inherits http status code');
-is($@->[1], 'Could not execute request (https://graph.facebook.com?fields=): GraphMethodException - Unsupported get request.', 'exception gives good detail');
+my $error_query = eval{ $fb->query->select_fields('')->request->as_json };
+is($@, '', 'expection undef value because dont search nothing');
 

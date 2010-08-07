@@ -6,6 +6,9 @@ use Facebook::Graph::Authorize;
 use Facebook::Graph::Query;
 use Facebook::Graph::Picture;
 
+
+our $VERSION = '0.0403';
+
 has app_id => (
     is      => 'ro',
 );
@@ -23,7 +26,10 @@ has access_token => (
     predicate   => 'has_access_token',
 );
 
-
+has error => (
+	is	=> 'rw',
+	isa	=> 'Str'
+);
 sub request_access_token {
     my ($self, $code) = @_;
     my $token = Facebook::Graph::AccessToken->new(

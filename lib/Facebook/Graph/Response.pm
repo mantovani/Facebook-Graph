@@ -8,25 +8,17 @@ has response => (
     required=> 1,
 );
 
+has 'error' => (
+	is	=> 'rw',
+	isa	=>	'Str',
+);
+
 has as_json => (
     is      => 'ro',
     lazy    => 1,
     default => sub {
-        my $self = shift;
-        my $response = $self->response;
-        if ($response->is_success) {
-            return $response->content;
-        }
-        else {
-            my $message = $response->message;
-            my $error = eval { JSON->new->decode($response->content) };
-            my $type = 'Unkown';
-            unless ($@) {
-                $message = $error->{error}{type} . ' - ' . $error->{error}{message};
-                $type = $error->{error}{type};
-            }
-            confess [$response->code, 'Could not execute request ('.$response->request->uri->as_string.'): '.$message, $type];
-        }
+		my $self = shift;
+		$self->error ? return : $self->response->content;
     },
 );
 
@@ -35,7 +27,11 @@ has as_hashref => (
     lazy    => 1,
     default => sub {
         my $self = shift;
-        return JSON->new->decode($self->as_json);
+		unless ($self->error) {
+        	return JSON->new->decode($self->as_json);
+		} else {
+			return;
+		}
     },
 );
 
