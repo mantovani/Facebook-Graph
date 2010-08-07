@@ -4,21 +4,21 @@ use Any::Moose;
 use JSON;
 
 has response => (
-    is      => 'ro',
-    required=> 1,
+    is       => 'ro',
+    required => 1,
 );
 
 has 'error' => (
-	is	=> 'rw',
-	isa	=>	'Str',
+    is  => 'rw',
+    isa => 'Str',
 );
 
 has as_json => (
     is      => 'ro',
     lazy    => 1,
     default => sub {
-		my $self = shift;
-		$self->error ? return : $self->response->content;
+        my $self = shift;
+        $self->error ? return : $self->response->content;
     },
 );
 
@@ -27,11 +27,12 @@ has as_hashref => (
     lazy    => 1,
     default => sub {
         my $self = shift;
-		unless ($self->error) {
-        	return JSON->new->decode($self->as_json);
-		} else {
-			return;
-		}
+        unless ( $self->error ) {
+            return JSON->new->decode( $self->as_json );
+        }
+        else {
+            return;
+        }
     },
 );
 
@@ -66,5 +67,4 @@ Direct access to the L<HTTP::Response> object.
 Facebook::Graph is Copyright 2010 Plain Black Corporation (L<http://www.plainblack.com>) and is licensed under the same terms as Perl itself.
 
 =cut
-
 

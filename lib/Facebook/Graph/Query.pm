@@ -6,80 +6,79 @@ with 'Facebook::Graph::Role::Uri';
 use LWP::UserAgent;
 
 has access_token => (
-    is          => 'ro',
-    predicate   => 'has_access_token',
+    is        => 'ro',
+    predicate => 'has_access_token',
 );
 
 has ids => (
-    is          => 'rw',
-    predicate   => 'has_ids',
-    lazy        => 1,
-    default     => sub { [] },
+    is        => 'rw',
+    predicate => 'has_ids',
+    lazy      => 1,
+    default   => sub { [] },
 );
 
 has fields => (
-    is          => 'rw',
-    predicate   => 'has_fields',
-    lazy        => 1,
-    default     => sub { [] },
+    is        => 'rw',
+    predicate => 'has_fields',
+    lazy      => 1,
+    default   => sub { [] },
 );
 
 has metadata => (
-    is          => 'rw',
-    predicate   => 'has_metadata',
+    is        => 'rw',
+    predicate => 'has_metadata',
 );
 
 has limit => (
-    is          => 'rw',
-    predicate   => 'has_limit',
+    is        => 'rw',
+    predicate => 'has_limit',
 );
 
 has offset => (
-    is          => 'rw',
-    predicate   => 'has_offset',
+    is        => 'rw',
+    predicate => 'has_offset',
 );
 
 has search_query => (
-    is          => 'rw',
-    predicate   => 'has_search_query',
+    is        => 'rw',
+    predicate => 'has_search_query',
 );
 
 has search_type => (
-    is          => 'rw',
-    predicate   => 'has_search_type',
+    is        => 'rw',
+    predicate => 'has_search_type',
 );
 
 has object_name => (
-    is          => 'rw',
-    default     => '',
+    is      => 'rw',
+    default => '',
 );
 
 has until => (
-    is          => 'rw',
-    predicate   => 'has_until',
+    is        => 'rw',
+    predicate => 'has_until',
 );
 
 has since => (
-    is          => 'rw',
-    predicate   => 'has_since',
+    is        => 'rw',
+    predicate => 'has_since',
 );
 
-
 sub limit_results {
-    my ($self, $limit) = @_;
+    my ( $self, $limit ) = @_;
     $self->limit($limit);
-    return $self;    
+    return $self;
 }
 
 sub find {
-    my ($self, $object_name) = @_;
+    my ( $self, $object_name ) = @_;
     $self->object_name($object_name);
     return $self;
 }
 
 sub search {
-    my ($self, $query, $type) = @_;
-    if ($type eq 'my_news') {
+    my ( $self, $query, $type ) = @_;
+    if ( $type eq 'my_news' ) {
         $self->object_name('me/home');
     }
     else {
@@ -91,38 +90,38 @@ sub search {
 }
 
 sub offset_results {
-    my ($self, $offset) = @_;
+    my ( $self, $offset ) = @_;
     $self->offset($offset);
-    return $self;    
+    return $self;
 }
 
 sub include_metadata {
-    my ($self, $include) = @_;
+    my ( $self, $include ) = @_;
     $include = 1 unless defined $include;
     $self->metadata($include);
     return $self;
 }
 
 sub select_fields {
-    my ($self, @fields) = @_;
-    push @{$self->fields}, @fields;
+    my ( $self, @fields ) = @_;
+    push @{ $self->fields }, @fields;
     return $self;
 }
 
 sub where_ids {
-    my ($self, @ids) = @_;
-    push @{$self->ids}, @ids;
+    my ( $self, @ids ) = @_;
+    push @{ $self->ids }, @ids;
     return $self;
 }
 
 sub where_until {
-    my ($self, $date) = @_;
+    my ( $self, $date ) = @_;
     $self->until($date);
     return $self;
 }
 
 sub where_since {
-    my ($self, $date) = @_;
+    my ( $self, $date ) = @_;
     $self->since($date);
     return $self;
 }
@@ -130,54 +129,54 @@ sub where_since {
 sub uri_as_string {
     my ($self) = @_;
     my %query;
-    if ($self->has_access_token) {
+    if ( $self->has_access_token ) {
         $query{access_token} = $self->access_token;
     }
-    if ($self->has_limit) {
+    if ( $self->has_limit ) {
         $query{limit} = $self->limit;
-        if ($self->has_offset) {
+        if ( $self->has_offset ) {
             $query{offset} = $self->offset;
         }
     }
-    if ($self->has_search_query) {
+    if ( $self->has_search_query ) {
         $query{q} = $self->search_query;
-        if ($self->has_search_type) {
+        if ( $self->has_search_type ) {
             $query{type} = $self->search_type;
         }
     }
-    if ($self->has_until) {
+    if ( $self->has_until ) {
         $query{until} = $self->until;
     }
-    if ($self->has_since) {
+    if ( $self->has_since ) {
         $query{since} = $self->since;
     }
-    if ($self->has_metadata) {
+    if ( $self->has_metadata ) {
         $query{metadata} = $self->metadata;
     }
-    if ($self->has_fields) {
-        $query{fields} = join(',', @{$self->fields});
+    if ( $self->has_fields ) {
+        $query{fields} = join( ',', @{ $self->fields } );
     }
-    if ($self->has_ids) {
-        $query{ids} = join(',', @{$self->ids});
+    if ( $self->has_ids ) {
+        $query{ids} = join( ',', @{ $self->ids } );
     }
     my $uri = $self->uri;
-    $uri->path($self->object_name);
+    $uri->path( $self->object_name );
     $uri->query_form(%query);
     return $uri->as_string;
 }
 
 sub request {
-    my ($self, $uri) = @_;
+    my ( $self, $uri ) = @_;
     $uri ||= $self->uri_as_string;
     my $response = LWP::UserAgent->new->get($uri);
-    my $graph_response = Facebook::Graph::Response->new(response => $response);
-	$graph_response->error($response->message) unless $response->is_success;
-	return $graph_response;
+    my $graph_response =
+      Facebook::Graph::Response->new( response => $response );
+    $graph_response->error( $response->message ) unless $response->is_success;
+    return $graph_response;
 }
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
-
 
 =head1 NAME
 
