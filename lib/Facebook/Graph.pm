@@ -1,20 +1,34 @@
 package Facebook::Graph;
+BEGIN {
+  $Facebook::Graph::VERSION = '1.0100';
+}
 
 use Any::Moose;
+use Digest::SHA qw(hmac_sha256);
+use MIME::Base64::URLSafe;
+use JSON;
 use Facebook::Graph::AccessToken;
 use Facebook::Graph::Authorize;
 use Facebook::Graph::Query;
 use Facebook::Graph::Picture;
-
-
-our $VERSION = '0.0403';
+use Facebook::Graph::Publish::Post;
+use Facebook::Graph::Publish::Like;
+use Facebook::Graph::Publish::Comment;
+use Facebook::Graph::Publish::Note;
+use Facebook::Graph::Publish::Link;
+use Facebook::Graph::Publish::Event;
+use Facebook::Graph::Publish::RSVPMaybe;
+use Facebook::Graph::Publish::RSVPAttending;
+use Facebook::Graph::Publish::RSVPDeclined;
+use Facebook::Graph::Exception;
 
 has app_id => (
     is      => 'ro',
 );
 
 has secret => (
-    is      => 'ro',
+    is          => 'ro',
+    predicate   => 'has_secret',
 );
 
 has postback => (
@@ -26,10 +40,26 @@ has access_token => (
     predicate   => 'has_access_token',
 );
 
-has error => (
-	is	=> 'rw',
-	isa	=> 'Str'
-);
+
+sub parse_signed_request {
+    my ($self, $signed_request) = @_;
+
+    my ($encoded_sig, $payload) = split(/\./, $signed_request);
+
+	my $sig = urlsafe_b64decode($encoded_sig);
+    my $data = JSON->new->decode(urlsafe_b64decode($payload));
+
+    if (uc($data->{'algorithm'}) ne "HMAC-SHA256") {
+        Facebook::Graph::Exception::General->throw( error => "Unknown algorithm. Expected HMAC-SHA256");
+    }
+
+    my $expected_sig = hmac_sha256($payload, $self->secret);
+    if ($sig ne $expected_sig) {
+        Facebook::Graph::Exception::General->throw( error => "Bad Signed JSON signature!");
+    }
+    return $data;
+}
+
 sub request_access_token {
     my ($self, $code) = @_;
     my $token = Facebook::Graph::AccessToken->new(
@@ -72,12 +102,139 @@ sub query {
     if ($self->has_access_token) {
         $params{access_token} = $self->access_token;
     }
+    if ($self->has_secret) {
+        $params{secret} = $self->secret;
+    }
     return Facebook::Graph::Query->new(%params);
 }
 
 sub picture {
     my ($self, $object_name) = @_;
     return Facebook::Graph::Picture->new( object_name => $object_name );
+}
+
+sub add_post {
+    my ($self, $object_name) = @_;
+    my %params;
+    if ($object_name) {
+        $params{object_name} = $object_name;
+    }
+    if ($self->has_access_token) {
+        $params{access_token} = $self->access_token;
+    }
+    if ($self->has_secret) {
+        $params{secret} = $self->secret;
+    }
+    return Facebook::Graph::Publish::Post->new( %params );
+}
+
+sub add_like {
+    my ($self, $object_name) = @_;
+    my %params = (
+        object_name => $object_name,
+    );
+    if ($self->has_access_token) {
+        $params{access_token} = $self->access_token;
+    }
+    if ($self->has_secret) {
+        $params{secret} = $self->secret;
+    }
+    return Facebook::Graph::Publish::Like->new( %params );
+}
+
+sub add_comment {
+    my ($self, $object_name) = @_;
+    my %params = (
+        object_name => $object_name,
+    );
+    if ($self->has_access_token) {
+        $params{access_token} = $self->access_token;
+    }
+    if ($self->has_secret) {
+        $params{secret} = $self->secret;
+    }
+    return Facebook::Graph::Publish::Comment->new( %params );
+}
+
+sub add_note {
+    my ($self) = @_;
+    my %params;
+    if ($self->has_access_token) {
+        $params{access_token} = $self->access_token;
+    }
+    if ($self->has_secret) {
+        $params{secret} = $self->secret;
+    }
+    return Facebook::Graph::Publish::Note->new( %params );
+}
+
+sub add_link {
+    my ($self) = @_;
+    my %params;
+    if ($self->has_access_token) {
+        $params{access_token} = $self->access_token;
+    }
+    if ($self->has_secret) {
+        $params{secret} = $self->secret;
+    }
+    return Facebook::Graph::Publish::Link->new( %params );
+}
+
+sub add_event {
+    my ($self, $object_name) = @_;
+    my %params;
+    if ($object_name) {
+        $params{object_name} = $object_name;
+    }
+    if ($self->has_access_token) {
+        $params{access_token} = $self->access_token;
+    }
+    if ($self->has_secret) {
+        $params{secret} = $self->secret;
+    }
+    return Facebook::Graph::Publish::Event->new( %params );
+}
+
+sub rsvp_maybe {
+    my ($self, $object_name) = @_;
+    my %params = (
+        object_name => $object_name,
+    );
+    if ($self->has_access_token) {
+        $params{access_token} = $self->access_token;
+    }
+    if ($self->has_secret) {
+        $params{secret} = $self->secret;
+    }
+    return Facebook::Graph::Publish::RSVPMaybe->new( %params );
+}
+
+sub rsvp_attending {
+    my ($self, $object_name) = @_;
+    my %params = (
+        object_name => $object_name,
+    );
+    if ($self->has_access_token) {
+        $params{access_token} = $self->access_token;
+    }
+    if ($self->has_secret) {
+        $params{secret} = $self->secret;
+    }
+    return Facebook::Graph::Publish::RSVPAttending->new( %params );
+}
+
+sub rsvp_declined {
+    my ($self, $object_name) = @_;
+    my %params = (
+        object_name => $object_name,
+    );
+    if ($self->has_access_token) {
+        $params{access_token} = $self->access_token;
+    }
+    if ($self->has_secret) {
+        $params{secret} = $self->secret;
+    }
+    return Facebook::Graph::Publish::RSVPDeclined->new( %params );
 }
 
 
@@ -88,6 +245,10 @@ __PACKAGE__->meta->make_immutable;
 =head1 NAME
 
 Facebook::Graph - A fast and easy way to integrate your apps with Facebook.
+
+=head1 VERSION
+
+version 1.0100
 
 =head1 SYNOPSIS
 
@@ -142,6 +303,8 @@ Get some info:
 =head1 DESCRIPTION
 
 This is a Perl interface to the Facebook Graph API L<http://developers.facebook.com/docs/api>. With this module you can currently query public Facebook data, query privileged Facebook data, and build a privileged Facebook application. See the TODO for all that this module cannot yet do.
+
+For example code, see L<Facebook::Graph::Cookbook>.
 
 B<WARNING:> The work on this module has only just begun because the Graph API itself isn't very new, and I'm only working on it as I have some tuits. Therefore things are potentially subject to change drastically with each release.
 
@@ -221,6 +384,78 @@ An profile id like C<sarahbownds> or an object id like C<16665510298> for the Pe
 
 
 
+=head2 add_post ( [ id ] )
+
+Creates a L<Facebook::Graph::Publish::Post> object, which can be used to publish data to a user's feed/wall.
+
+=head3 id
+
+Optionally provide an object id to place it on. Requires that you have administrative access to that page/object.
+
+
+=head2 add_like ( id )
+
+Creates a L<Facebook::Graph::Publish::Like> object to tell everyone about a post you like.
+
+=head3 id
+
+The id of a post you like.
+
+
+=head2 add_comment ( id )
+
+Creates a L<Facebook::Graph::Publish::Comment> object that you can use to comment on a note.
+
+=head3 id
+
+The id of the post you want to comment on.
+
+
+=head2 add_note ( )
+
+Creates a L<Facebook::Graph::Publish::Note> object, which can be used to publish notes.
+
+
+=head2 add_link ( )
+
+Creates a L<Facebook::Graph::Publish::Link> object, which can be used to publish links.
+
+
+=head2 add_event ( [id] )
+
+Creates a L<Facebook::Graph::Publish::Event> object, which can be used to publish events.
+
+=head3 id
+
+Optionally provide an object id to place it on. Requires that you have administrative access to that page/object.
+
+
+
+=head2 rsvp_maybe ( id )
+
+RSVP as 'maybe' to an event.
+
+=head3 id
+
+The id of an event.
+
+=head2 rsvp_attending ( id )
+
+RSVP as 'attending' to an event.
+
+=head3 id
+
+The id of an event.
+
+=head2 rsvp_declined ( id )
+
+RSVP as 'declined' to an event.
+
+=head3 id
+
+The id of an event.
+
+
 
 =head2 convert_sessions ( sessions )
 
@@ -241,17 +476,24 @@ See also L<Facebook::Graph::Session>.
 An array reference of session ids from the old Facebook API.
 
 
+=head2 parse_signed_request ( signed_request )
+
+Allows the decoding of signed requests for canvas applications to ensure data passed back from Facebook isn't tampered with. You can read more about this at L<http://developers.facebook.com/docs/authentication/canvas>.
+
+=head3 signed_request
+
+A signature string passed from Facebook. To capture a signed request your app must be displayed within the Facebook canvas page and then you must pull the query parameter called C<signed_request> from the query string.
+
+B<NOTE:> To get this passed to your app you must enable it in your migration settings for your app (L<http://www.facebook.com/developers/>).
 
 =head1 EXCEPTIONS
 
-This module throws exceptions when it encounters a problem. The exceptions are an array reference. The first element is an HTTP status code. The second element is a human readable string. The third element is the exception type as identified by the Facebook API, or if something terrible went wrong C<Unknown>. For example:
-
- [400, 'Could not execute request (https://graph.facebook.com?fields=): GraphMethodException - Unsupported get request.', 'GraphMethodException']
+This module throws exceptions when it encounters a problem. See L<Facebook::Graph::Exception> for details.
 
 
 =head1 TODO
 
-I still need to add publishing of content, deleting of content, impersonation, and analytics to have a feature complete API. In addition, the module could use a lot more tests.
+I still need to add publishing albums/photos, deleting of content, impersonation, and analytics to have a feature complete API. In addition, the module could use a lot more tests.
 
 
 =head1 PREREQS
@@ -261,8 +503,15 @@ L<JSON>
 L<LWP>
 L<URI>
 L<Crypt::SSLeay>
+L<DateTime>
+L<DateTime::Format::Strptime>
+L<MIME::Base64::URLSafe>
+L<Digest::SHA>
+L<URI::Encode>
+L<Exception::Class>
 
 B<NOTE:> This module requires SSL to function, but on some systems L<Crypt::SSLeay> can be difficult to install. You may optionally choose to install L<IO::Socket::SSL> instead and it will provide the same function. Unfortunately that means you'll need to C<force> Facebook::Graph to install if you do not have C<Crypt::SSLeay> installed.
+
 
 =head1 SUPPORT
 
@@ -292,5 +541,3 @@ JT Smith <jt_at_plainblack_dot_com>
 Facebook::Graph is Copyright 2010 Plain Black Corporation (L<http://www.plainblack.com>) and is licensed under the same terms as Perl itself.
 
 =cut
-
-

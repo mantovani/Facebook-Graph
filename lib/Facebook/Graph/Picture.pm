@@ -1,4 +1,7 @@
 package Facebook::Graph::Picture;
+BEGIN {
+  $Facebook::Graph::Picture::VERSION = '1.0100';
+}
 
 use Any::Moose;
 with 'Facebook::Graph::Role::Uri';
@@ -51,6 +54,10 @@ __PACKAGE__->meta->make_immutable;
 =head1 NAME
 
 Facebook::Graph::Picture - Get the URI for the picture of any object.
+
+=head1 VERSION
+
+version 1.0100
 
 =head1 SYNOPSIS
 

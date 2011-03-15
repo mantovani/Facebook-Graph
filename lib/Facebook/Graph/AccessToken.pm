@@ -1,4 +1,7 @@
 package Facebook::Graph::AccessToken;
+BEGIN {
+  $Facebook::Graph::AccessToken::VERSION = '1.0100';
+}
 
 use Any::Moose;
 use Facebook::Graph::AccessToken::Response;
@@ -52,6 +55,10 @@ __PACKAGE__->meta->make_immutable;
 
 Facebook::Graph::AccessToken - Acquire an access token from Facebook.
 
+
+=head1 VERSION
+
+version 1.0100
 
 =head1 SYNOPSIS
 

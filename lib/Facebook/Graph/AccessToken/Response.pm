@@ -1,8 +1,12 @@
 package Facebook::Graph::AccessToken::Response;
+BEGIN {
+  $Facebook::Graph::AccessToken::Response::VERSION = '1.0100';
+}
 
 use Any::Moose;
 use URI;
 use URI::QueryParam;
+use Facebook::Graph::Exception;
 
 has response => (
     is      => 'ro',
@@ -19,7 +23,14 @@ has token => (
             return URI->new('?'.$response->content)->query_param('access_token');
         }
         else {
-            confess [$response->code, 'Could not fetch access token: '.$response->message]
+            Facebook::Graph::Exception::RPC->throw(
+                error               => 'Could not fetch access token: '.$response->message,
+                uri                 => $response->request->uri->as_string,
+                http_code           => $response->code,
+                http_message        => $response->message,
+                facebook_message    => 'Could not fetch access token.',
+                facebook_type       => 'None',
+            );
         }
     }
 );
@@ -34,7 +45,14 @@ has expires => (
             return URI->new('?'.$response->content)->query_param('expires');
         }
         else {
-            confess [$response->code, 'Could not fetch access token: '.$response->message]
+            Facebook::Graph::Exception::RPC->throw(
+                error               => 'Could not fetch access token: '.$response->message,
+                uri                 => $response->request->uri->as_string,
+                http_code           => $response->code,
+                http_message        => $response->message,
+                facebook_message    => 'Could not fetch access token.',
+                facebook_type       => 'None',
+            );
         }
     }
 );
@@ -45,6 +63,10 @@ __PACKAGE__->meta->make_immutable;
 =head1 NAME
 
 Facebook::Graph::AccessToken::Response - The Facebook access token request response.
+
+=head1 VERSION
+
+version 1.0100
 
 =head1 Description
 
@@ -69,5 +91,3 @@ Direct access to the L<HTTP::Response> object.
 Facebook::Graph is Copyright 2010 Plain Black Corporation (L<http://www.plainblack.com>) and is licensed under the same terms as Perl itself.
 
 =cut
-
-

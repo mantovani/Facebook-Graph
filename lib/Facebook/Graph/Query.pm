@@ -1,127 +1,143 @@
 package Facebook::Graph::Query;
+BEGIN {
+  $Facebook::Graph::Query::VERSION = '1.0100';
+}
 
 use Any::Moose;
 use Facebook::Graph::Response;
 with 'Facebook::Graph::Role::Uri';
 use LWP::UserAgent;
+use URI::Encode qw(uri_decode);
+
+has secret => (
+    is          => 'ro',
+    required    => 0,
+    predicate   => 'has_secret',
+);
 
 has access_token => (
-    is        => 'ro',
-    predicate => 'has_access_token',
+    is          => 'ro',
+    predicate   => 'has_access_token',
 );
 
 has ids => (
-    is        => 'rw',
-    predicate => 'has_ids',
-    lazy      => 1,
-    default   => sub { [] },
+    is          => 'rw',
+    predicate   => 'has_ids',
+    lazy        => 1,
+    default     => sub { [] },
 );
 
 has fields => (
-    is        => 'rw',
-    predicate => 'has_fields',
-    lazy      => 1,
-    default   => sub { [] },
+    is          => 'rw',
+    predicate   => 'has_fields',
+    lazy        => 1,
+    default     => sub { [] },
 );
 
 has metadata => (
-    is        => 'rw',
-    predicate => 'has_metadata',
+    is          => 'rw',
+    predicate   => 'has_metadata',
 );
 
 has limit => (
-    is        => 'rw',
-    predicate => 'has_limit',
+    is          => 'rw',
+    predicate   => 'has_limit',
 );
 
 has offset => (
-    is        => 'rw',
-    predicate => 'has_offset',
+    is          => 'rw',
+    predicate   => 'has_offset',
 );
 
 has search_query => (
-    is        => 'rw',
-    predicate => 'has_search_query',
+    is          => 'rw',
+    predicate   => 'has_search_query',
 );
 
 has search_type => (
-    is        => 'rw',
-    predicate => 'has_search_type',
+    is          => 'rw',
+    predicate   => 'has_search_type',
 );
 
 has object_name => (
-    is      => 'rw',
-    default => '',
+    is          => 'rw',
+    default     => '',
 );
 
 has until => (
-    is        => 'rw',
-    predicate => 'has_until',
+    is          => 'rw',
+    predicate   => 'has_until',
 );
 
 has since => (
-    is        => 'rw',
-    predicate => 'has_since',
+    is          => 'rw',
+    predicate   => 'has_since',
 );
 
+
 sub limit_results {
-    my ( $self, $limit ) = @_;
+    my ($self, $limit) = @_;
     $self->limit($limit);
-    return $self;
+    return $self;    
 }
 
 sub find {
-    my ( $self, $object_name ) = @_;
+    my ($self, $object_name) = @_;
     $self->object_name($object_name);
     return $self;
 }
 
 sub search {
-    my ( $self, $query, $type ) = @_;
-    if ( $type eq 'my_news' ) {
+    my ($self, $query, $type) = @_;
+    $self->search_query($query);
+    return ($type) ? $self->from($type) : $self;
+}
+
+sub from {
+    my ($self, $type) = @_;
+    if ($type eq 'my_news') {
         $self->object_name('me/home');
     }
     else {
         $self->object_name('search');
         $self->search_type($type);
     }
-    $self->search_query($query);
     return $self;
 }
 
 sub offset_results {
-    my ( $self, $offset ) = @_;
+    my ($self, $offset) = @_;
     $self->offset($offset);
-    return $self;
+    return $self;    
 }
 
 sub include_metadata {
-    my ( $self, $include ) = @_;
+    my ($self, $include) = @_;
     $include = 1 unless defined $include;
     $self->metadata($include);
     return $self;
 }
 
 sub select_fields {
-    my ( $self, @fields ) = @_;
-    push @{ $self->fields }, @fields;
+    my ($self, @fields) = @_;
+    push @{$self->fields}, @fields;
     return $self;
 }
 
 sub where_ids {
-    my ( $self, @ids ) = @_;
-    push @{ $self->ids }, @ids;
+    my ($self, @ids) = @_;
+    push @{$self->ids}, @ids;
     return $self;
 }
 
 sub where_until {
-    my ( $self, $date ) = @_;
+    my ($self, $date) = @_;
     $self->until($date);
     return $self;
 }
 
 sub where_since {
-    my ( $self, $date ) = @_;
+    my ($self, $date) = @_;
     $self->since($date);
     return $self;
 }
@@ -129,90 +145,96 @@ sub where_since {
 sub uri_as_string {
     my ($self) = @_;
     my %query;
-    if ( $self->has_access_token ) {
-        $query{access_token} = $self->access_token;
+    if ($self->has_access_token) {
+        $query{access_token} = uri_decode($self->access_token);
     }
-    if ( $self->has_limit ) {
+    if ($self->has_limit) {
         $query{limit} = $self->limit;
-        if ( $self->has_offset ) {
+        if ($self->has_offset) {
             $query{offset} = $self->offset;
         }
     }
-    if ( $self->has_search_query ) {
+    if ($self->has_search_query) {
         $query{q} = $self->search_query;
-        if ( $self->has_search_type ) {
+        if ($self->has_search_type) {
             $query{type} = $self->search_type;
         }
     }
-    if ( $self->has_until ) {
+    if ($self->has_until) {
         $query{until} = $self->until;
     }
-    if ( $self->has_since ) {
+    if ($self->has_since) {
         $query{since} = $self->since;
     }
-    if ( $self->has_metadata ) {
+    if ($self->has_metadata) {
         $query{metadata} = $self->metadata;
     }
-    if ( $self->has_fields ) {
-        $query{fields} = join( ',', @{ $self->fields } );
+    if ($self->has_fields) {
+        $query{fields} = join(',', @{$self->fields});
     }
-    if ( $self->has_ids ) {
-        $query{ids} = join( ',', @{ $self->ids } );
+    if ($self->has_ids) {
+        $query{ids} = join(',', @{$self->ids});
     }
     my $uri = $self->uri;
-    $uri->path( $self->object_name );
+    $uri->path($self->object_name);
     $uri->query_form(%query);
     return $uri->as_string;
 }
 
 sub request {
-    my ( $self, $uri ) = @_;
+    my ($self, $uri) = @_;
     $uri ||= $self->uri_as_string;
     my $response = LWP::UserAgent->new->get($uri);
-    my $graph_response =
-      Facebook::Graph::Response->new( response => $response );
-    $graph_response->error( $response->message ) unless $response->is_success;
+    my %params = (response => $response);
+    if ($self->has_secret) {
+        $params{secret} = $self->secret;
+    }
+    my $graph_response = Facebook::Graph::Response->new(%params);
+	$graph_response->error($response->message) unless $response->is_success;
     return $graph_response;
 }
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 
+
 =head1 NAME
 
 Facebook::Graph::Query - Simple and fast searching and fetching of Facebook data.
 
+=head1 VERSION
+
+version 1.0100
+
 =head1 SYNOPSIS
 
  my $fb = Facebook::Graph->new;
-
- use Data::Dumper; 
-
+ 
  my $perl_page = $fb->find('16665510298')
     ->include_metadata
-    ->request;
- if (!$perl_page->error) {
-    print Dumper $perl_page->to_hashref;
- } else {
-	die $perl_page->error;
- }
+    ->request
+    ->as_hashref;
  
  my $sarah_bownds = $fb->find('sarahbownds')
     ->select_fields(qw(id name))
-    ->request;
+    ->request
+    ->as_hashref;
 
- if (!$sarah_bownd->error) {
- 		print Dumper $sarah_bownd->to_hashref;
- } else {
- 		die $sarah_bownd->error;
- }
+ # this one would require an access token
+ my $new_years_posts = $fb->query
+    ->from('posts')
+    ->where_since('1 January 2011')
+    ->where_until('2 January 2011')
+    ->limit(25)
+    ->request
+    ->as_hashref;
 
  # this one would require an access token
  my $new_car_posts = $fb->query
     ->search('car', 'my_news')
     ->where_since('yesterday')
     ->request
-    ->to_hashref;
+    ->as_hashref;
 
 
 =head1 DESCRIPTION
@@ -225,7 +247,7 @@ This module presents a programatic approach to building the queries necessary to
     ->where_since('yesterday')
     ->limit_results(25)
     ->request
-    ->to_hashref;
+    ->as_hashref;
     
 The above query, if you were read it like text, says: "Give me the user ids and full names of all users named Dave that have been created since yesterday, and limit the result set to the first 25."
 
@@ -245,17 +267,15 @@ B<Example:> For user "Sarah Bownds" you could use either her profile id C<sarahb
 
 
 
-=head2 search ( query, type )
+=head2 from ( context )
 
-Perform a keyword search on a group of items.
 
-=head3 query
 
-They keywords to search by.
+If you prefer to search by keyword see the C<search> method.
 
-=head3 type
+=head3 context
 
-One of the following types:
+One of the following contexts:
 
 =over
 
@@ -282,6 +302,23 @@ All events.
 =item group
 
 All groups.
+
+
+
+
+=head2 search ( query, context )
+
+Perform a keyword search on a group of items. 
+
+If you prefer not to search by keyword see the C<from> method.
+
+=head3 query
+
+They keywords to search by.
+
+=head3 context
+
+See the C<context> param in the C<from> method.
 
 =back
 
@@ -365,10 +402,6 @@ Returns a URI string based upon all the methods you've called so far on the quer
 =head2 request ( [ uri ] )
 
 Forms a URI string based on every method you've called so far, and fetches the data. Returns a L<Facebook::Graph::Response> object.
-
-=head2 error
-
-After you do "..->request", you can check errors.
 
 =head3 uri
 

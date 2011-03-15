@@ -1,4 +1,7 @@
 package Facebook::Graph::Session;
+BEGIN {
+  $Facebook::Graph::Session::VERSION = '1.0100';
+}
 
 use Any::Moose;
 use Facebook::Graph::Response;
@@ -47,6 +50,10 @@ __PACKAGE__->meta->make_immutable;
 
 Facebook::Graph::Session - Convert old API sessions into Graph API access_tokens.
 
+
+=head1 VERSION
+
+version 1.0100
 
 =head1 SYNOPSIS
 

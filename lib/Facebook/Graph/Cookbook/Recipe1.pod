@@ -2,6 +2,10 @@
 
 Facebook::Graph::Cookbook::Recipe1 - Building Privileged Applications
 
+=head1 VERSION
+
+version 1.0100
+
 =head1 DESCRIPTION
 
 Let's build a privileged Facebook application from nothing.
